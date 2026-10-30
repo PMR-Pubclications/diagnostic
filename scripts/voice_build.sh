@@ -16,3 +16,7 @@ cmake ..
 make -j$(nproc)
 
 echo "C++ Engine build complete."
+
+export WORKSPACE_ROOT="/path/to/your/workspace"
+python3 scripts/voice/voice_controller.py
+

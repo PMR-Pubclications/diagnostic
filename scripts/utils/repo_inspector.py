@@ -1,25 +1,65 @@
 import os
 import subprocess
 import logging
-import sys
+import yaml
 
-# Ensure utils path is accessible
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("RepoInspector")
 
 class MultiRepoDiagnostics:
-    def __init__(self, workspace_root="../"):
-        """
-        Initializes the inspector assuming the 4 repos are sibling directories 
-        to the diagnostic project workspace.
-        """
-        self.workspace_root = os.path.abspath(workspace_root)
-        self.target_repos = {
-            "Trust-Main": os.path.join(self.workspace_root, "Trust-Main"),
-            "Trust-Shell": os.path.join(self.workspace_root, "Trust-Shell"),
-            "AudioVideoEngine-CPP": os.path.join(self.workspace_root, "AudioVideoEngine-CPP"),
-            "AnnonOS": os.path.join(self.workspace_root, "AnnonOS")
+    """Portable multi-repository scanner that reads paths dynamically from config."""
+    def __init__(self, config_path=None):
+        if not config_path:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            config_path = os.path.abspath(os.path.join(script_dir, "..", "..", "config", "config.yaml"))
+        
+        self.config = self._load_config(config_path)
+        self.workspace_root = self._resolve_workspace_root()
+        self.target_repos = self._resolve_repository_paths()
+
+    def _load_config(self, path: str) -> dict:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    return yaml.safe_load(f) or {}
+            except Exception as e:
+                logger.warning(f"Could not load config file at {path}: {e}")
+        
+        # Fallback default configuration if yaml is missing
+        return {
+            "target_repositories": [
+                {"name": "Trust-Main", "relative_path": "Trust-Main"},
+                {"name": "Trust-Shell", "relative_path": "Trust-Shell"},
+                {"name": "AudioVideoEngine-CPP", "relative_path": "AudioVideoEngine-CPP"},
+                {"name": "AnnonOS", "relative_path": "AnnonOS"}
+            ]
         }
+
+    def _resolve_workspace_root(self) -> str:
+        # Check environment variable override first, then fallback to relative offset
+        workspace_cfg = self.config.get("workspace", {})
+        env_var = workspace_cfg.get("env_override", "WORKSPACE_ROOT")
+        default_offset = workspace_cfg.get("default_root_offset", "..")
+        
+        if os.environ.get(env_var):
+            root = os.environ.get(env_var)
+            logger.info(f"Using workspace root from environment variable '{env_var}': {root}")
+            return os.path.abspath(root)
+        
+        # Fallback relative to diagnostic repo root
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        resolved = os.path.abspath(os.path.join(script_dir, "..", "..", default_offset))
+        logger.info(f"Using resolved workspace root: {resolved}")
+        return resolved
+
+    def _resolve_repository_paths(self) -> dict:
+        repos = {}
+        repo_list = self.config.get("target_repositories", [])
+        for repo in repo_list:
+            name = repo.get("name")
+            rel_path = repo.get("relative_path")
+            repos[name] = os.path.join(self.workspace_root, rel_path)
+        return repos
 
     def inspect_repository(self, repo_name: str, repo_path: str) -> dict:
         """Performs structural and test health checks on a specific repository."""
@@ -31,13 +71,13 @@ class MultiRepoDiagnostics:
 
         report = {"repo": repo_name, "status": "healthy", "issues": []}
 
-        # 1. Check for common build or config files
+        # Check for C++ build directory if applicable
         if repo_name == "AudioVideoEngine-CPP":
             build_dir = os.path.join(repo_path, "build")
             if not os.path.exists(build_dir):
                 report["issues"].append("Missing CMake 'build' directory. Binary may need compilation.")
         
-        # 2. Run unit tests if a test suite exists (e.g., pytest or make test)
+        # Run unit tests if a test suite exists
         pytest_path = os.path.join(repo_path, "tests")
         if os.path.exists(pytest_path):
             try:
@@ -59,7 +99,7 @@ class MultiRepoDiagnostics:
         return report
 
     def run_full_diagnostic(self) -> list:
-        """Scans all four connected repositories and returns collective health reports."""
+        """Scans all configured repositories and returns collective health reports."""
         results = []
         for name, path in self.target_repos.items():
             result = self.inspect_repository(name, path)
@@ -70,9 +110,9 @@ if __name__ == "__main__":
     inspector = MultiRepoDiagnostics()
     health_reports = inspector.run_full_diagnostic()
     
-    print("\n=== MULTI-REPOSITORY DIAGNOSTIC REPORT ===")
+    print("\n=== PORTABLE MULTI-REPOSITORY DIAGNOSTIC REPORT ===")
     for rep in health_reports:
         print(f"[{rep['repo'].upper()}] Status: {rep['status'].upper()}")
         for issue in rep['issues']:
             print(f"  - {issue}")
-    print("==========================================")
+    print("===================================================")

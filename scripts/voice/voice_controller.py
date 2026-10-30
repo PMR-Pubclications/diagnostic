@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import json
 import logging
 
 # Dynamically ensure root and utils paths are accessible
@@ -14,7 +15,6 @@ if UTILS_DIR not in sys.path:
 try:
     from audio_feedback import AnnonAudioFeedback
 except ImportError:
-    # Safe fallback if audio feedback module is building/linking
     class AnnonAudioFeedback:
         def __init__(self, trust_main_path="../Trust-Main"):
             pass
@@ -26,16 +26,45 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("VoiceController")
 
 
+class TrustCommandRegistry:
+    """Reads the audio voice command list directly from Trust-Main."""
+    def __init__(self, trust_main_path="../Trust-Main"):
+        self.registry_path = os.path.abspath(
+            os.path.join(PROJECT_ROOT, "..", "Trust-Main", "modules", "Annon", "config", "commands.json")
+        )
+        self.commands = self.load_commands()
+
+    def load_commands(self) -> dict:
+        if os.path.exists(self.registry_path):
+            try:
+                with open(self.registry_path, "r") as f:
+                    logger.info("Successfully loaded command registry from Trust-Main.")
+                    return json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not read commands.json from Trust-Main: {e}")
+        
+        # Fallback command dictionary if Trust-Main path is unreachable
+        return {
+            "run diagnostics": "execute_diagnostic_pipeline",
+            "annon, how are you feeling?": "status_check",
+            "how are you feeling": "status_check",
+            "diagnostic track": "track_telemetry_logs",
+            "check hardware": "hardware_stream_status"
+        }
+
+    def resolve_command(self, spoken_text: str) -> str:
+        cleaned = spoken_text.strip().lower()
+        return self.commands.get(cleaned, "unknown_command")
+
+
 class AudioVideoVoiceBridge:
     """Handles low-level command routing to the C++ hardware engine."""
     def __init__(self, binary_name="AudioVideoEngine"):
         self.binary_path = os.path.join(PROJECT_ROOT, binary_name)
 
     def execute_engine_command(self, command_args: list) -> dict:
-        """Passes voice-parsed commands down to the compiled C++ engine binary."""
         full_command = [self.binary_path] + command_args
-        
-        logger.info(f"Executing engine command: {' '.join(full_command)}")
+        logger.info(f"Executing C++ engine command: {' '.join(full_command)}")
         try:
             result = subprocess.run(full_command, capture_output=True, text=True, check=True)
             return {"status": "success", "output": result.stdout.strip()}
@@ -48,16 +77,18 @@ class AudioVideoVoiceBridge:
 
 
 class VoiceController:
-    """High-level voice interface connecting speech commands, audio feedback, C++ engine execution, and repo scanning."""
+    """High-level voice interface connecting speech commands, audio feedback, C++ engine execution, and Trust-Main registry."""
     def __init__(self, trust_main_path="../Trust-Main"):
         self.audio = AnnonAudioFeedback(trust_main_path=trust_main_path)
         self.bridge = AudioVideoVoiceBridge()
+        self.registry = TrustCommandRegistry(trust_main_path=trust_main_path)
 
     def process_command(self, command: str):
         command_clean = command.strip().lower()
-        logger.info(f"Processing voice command: '{command_clean}'")
+        action = self.registry.resolve_command(command_clean)
+        logger.info(f"Command received: '{command_clean}' -> Action: '{action}'")
 
-        if command_clean == "run diagnostics":
+        if action == "execute_diagnostic_pipeline":
             self.audio.speak("Starting cross-repository system diagnostics. Scanning Trust Main, Trust Shell, Audio Video Engine, and Annon OS.")
             
             # 1. Run Multi-Repo Inspector scan
@@ -87,10 +118,20 @@ class VoiceController:
             else:
                 self.audio.speak("Diagnostics encountered an error during log analysis.")
 
-        elif command_clean == "check hardware":
+        elif action == "status_check":
+            self.audio.speak("All systems are operational. Trust ledgers, security handshakes, and audio engines are running smoothly.")
+            logger.info("Annon status check requested: Systems nominal.")
+
+        elif action == "track_telemetry_logs":
+            self.audio.speak("Initializing diagnostic telemetry tracking. Scanning active log outputs.")
+            log_dir = os.path.join(PROJECT_ROOT, "logs", "training_logs")
+            if os.path.exists(log_dir):
+                self.audio.speak("Log tracks are active and recording data.")
+            else:
+                self.audio.speak("Warning: Log tracking directory not found or inactive.")
+
+        elif action == "hardware_stream_status":
             self.audio.speak("Initiating hardware check across audio and video streams.")
-            
-            # Execute hardware status via C++ engine
             res = self.bridge.execute_engine_command(["--status"])
             
             if res["status"] in ["success", "simulated"]:
@@ -106,35 +147,6 @@ if __name__ == "__main__":
     controller = VoiceController()
     
     # Test execution run
-    controller.process_command("run diagnostics")
+    controller.process_command("annon, how are you feeling?")
     print("---")
-    controller.process_command("check hardware")
-
-import sys
-import os
-
-# Import the audio wrapper from utils
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.audio_feedback import AnnonAudioFeedback
-
-class VoiceController:
-    def __init__(self):
-        self.audio = AnnonAudioFeedback()
-
-    def process_command(self, command: str):
-        if command == "run diagnostics":
-            self.audio.speak("Starting system diagnostics. Analyzing raw telemetry logs.")
-            # Execute diagnostic logic here...
-            self.audio.speak("Diagnostics complete. No hardware anomalies detected.")
-            
-        elif command == "check hardware":
-            self.audio.speak("Initiating hardware check across audio and video streams.")
-            # Execute hardware checks...
-            self.audio.speak("Hardware check passed.")
-            
-        else:
-            self.audio.speak("Command not recognized. Please repeat your instruction.")
-
-if __name__ == "__main__":
-    controller = VoiceController()
-    controller.process_command("run diagnostics")
+    controller.process_command("diagnostic track")

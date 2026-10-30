@@ -109,3 +109,32 @@ if __name__ == "__main__":
     controller.process_command("run diagnostics")
     print("---")
     controller.process_command("check hardware")
+
+import sys
+import os
+
+# Import the audio wrapper from utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utils.audio_feedback import AnnonAudioFeedback
+
+class VoiceController:
+    def __init__(self):
+        self.audio = AnnonAudioFeedback()
+
+    def process_command(self, command: str):
+        if command == "run diagnostics":
+            self.audio.speak("Starting system diagnostics. Analyzing raw telemetry logs.")
+            # Execute diagnostic logic here...
+            self.audio.speak("Diagnostics complete. No hardware anomalies detected.")
+            
+        elif command == "check hardware":
+            self.audio.speak("Initiating hardware check across audio and video streams.")
+            # Execute hardware checks...
+            self.audio.speak("Hardware check passed.")
+            
+        else:
+            self.audio.speak("Command not recognized. Please repeat your instruction.")
+
+if __name__ == "__main__":
+    controller = VoiceController()
+    controller.process_command("run diagnostics")

@@ -1,41 +1,40 @@
+# ==========================================
+# DIAGNOSTIC REPOSITORY PORTABLE CONFIG
+# ==========================================
+
 project:
-  name: "my_diagnostic_project"
-  version: "1.0.0"
+  name: "DiagnosticCore"
+  version: "2.0.0"
+  role: "Ecosystem Health & Telemetry Hub"
 
-voice_interface:
-  enabled: true
-  engine: "faster-whisper" # or your local audio pipeline
-  sample_rate: 16000
-  wake_word: "diagnose"
-  audio_input_device: "default"
+# Workspace & Path Discovery (Supports ENV override: WORKSPACE_ROOT)
+workspace:
+  default_root_offset: ".."
+  env_override: "WORKSPACE_ROOT"
 
-paths:
-  raw_logs: "data/Raw/logs/"
-  processed_data: "data/Processed/"
-  models_dir: "models/saved_models/"
-  vector_db: "models/vector_db/"
+# Target repositories to scan and monitor
+target_repositories:
+  - name: "Trust-Main"
+    relative_path: "Trust-Main"
+    role: "Core Trust & Ledger Management"
+  - name: "Trust-Shell"
+    relative_path: "Trust-Shell"
+    role: "User Interface & Voice Routing"
+  - name: "AudioVideoEngine-CPP"
+    relative_path: "AudioVideoEngine-CPP"
+    role: "Hardware Audio/Video Processing"
+  - name: "AnnonOS"
+    relative_path: "AnnonOS"
+    role: "System-level Mobile Environment"
 
-logging:
-  level: "INFO"
-  save_to_file: true
-  log_path: "logs/training_logs/metrics.log"
-
-# my_diagnostic_project/config/config.yaml
+# Security & Handshake Settings
 security:
   handshake_protocol: "HMAC-SHA256"
-  token_expiration_seconds: 300
   shared_secret_env_var: "REPO_SHARED_SECRET"
+  token_expiration_seconds: 300
 
-connected_repositories:
-  - name: "Trust-Main"
-    role: "Core Trust & Ledger Management"
-    expected_endpoint: "local_pipe_or_socket_1"
-  - name: "Trust-Shell"
-    role: "User Interface & Voice Routing"
-    expected_endpoint: "local_pipe_or_socket_2"
-  - name: "AudioVideoEngine-CPP"
-    role: "Hardware Audio/Video Processing"
-    expected_endpoint: "local_pipe_or_socket_3"
-  - name: "AnnonOS"
-    role: "System-level Mobile Environment"
-    expected_endpoint: "local_pipe_or_socket_4"
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  save_to_file: true

@@ -16,6 +16,8 @@ try:
 except ImportError:
     # Safe fallback if audio feedback module is building/linking
     class AnnonAudioFeedback:
+        def __init__(self, trust_main_path="../Trust-Main"):
+            pass
         def speak(self, text: str):
             print(f"[Fallback Audio Output]: {text}")
 
@@ -46,7 +48,7 @@ class AudioVideoVoiceBridge:
 
 
 class VoiceController:
-    """High-level voice interface connecting speech commands, audio feedback, and C++ engine execution."""
+    """High-level voice interface connecting speech commands, audio feedback, C++ engine execution, and repo scanning."""
     def __init__(self, trust_main_path="../Trust-Main"):
         self.audio = AnnonAudioFeedback(trust_main_path=trust_main_path)
         self.bridge = AudioVideoVoiceBridge()
@@ -56,9 +58,28 @@ class VoiceController:
         logger.info(f"Processing voice command: '{command_clean}'")
 
         if command_clean == "run diagnostics":
-            self.audio.speak("Starting system diagnostics. Analyzing raw telemetry logs.")
+            self.audio.speak("Starting cross-repository system diagnostics. Scanning Trust Main, Trust Shell, Audio Video Engine, and Annon OS.")
             
-            # Execute hardware diagnosis via C++ engine
+            # 1. Run Multi-Repo Inspector scan
+            try:
+                from repo_inspector import MultiRepoDiagnostics
+                inspector = MultiRepoDiagnostics(workspace_root=os.path.join(PROJECT_ROOT, ".."))
+                reports = inspector.run_full_diagnostic()
+                
+                issues_found = False
+                for rep in reports:
+                    if rep["status"] != "healthy":
+                        issues_found = True
+                        self.audio.speak(f"Warning detected in {rep['repo']}.")
+                
+                if not issues_found:
+                    self.audio.speak("All connected repositories checked out successfully.")
+            except Exception as e:
+                logger.error(f"Failed to run multi-repo diagnostic: {e}")
+                self.audio.speak("Error executing multi-repository diagnostic scan.")
+
+            # 2. Execute hardware diagnosis via C++ engine
+            self.audio.speak("Analyzing raw telemetry logs via hardware engine.")
             res = self.bridge.execute_engine_command(["--diagnose", "--verbose"])
             
             if res["status"] in ["success", "simulated"]:

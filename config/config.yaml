@@ -1,0 +1,21 @@
+project:
+  name: "my_diagnostic_project"
+  version: "1.0.0"
+
+voice_interface:
+  enabled: true
+  engine: "faster-whisper" # or your local audio pipeline
+  sample_rate: 16000
+  wake_word: "diagnose"
+  audio_input_device: "default"
+
+paths:
+  raw_logs: "data/Raw/logs/"
+  processed_data: "data/Processed/"
+  models_dir: "models/saved_models/"
+  vector_db: "models/vector_db/"
+
+logging:
+  level: "INFO"
+  save_to_file: true
+  log_path: "logs/training_logs/metrics.log"

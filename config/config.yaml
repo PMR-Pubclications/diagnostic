@@ -19,3 +19,23 @@ logging:
   level: "INFO"
   save_to_file: true
   log_path: "logs/training_logs/metrics.log"
+
+# my_diagnostic_project/config/config.yaml
+security:
+  handshake_protocol: "HMAC-SHA256"
+  token_expiration_seconds: 300
+  shared_secret_env_var: "REPO_SHARED_SECRET"
+
+connected_repositories:
+  - name: "Trust-Main"
+    role: "Core Trust & Ledger Management"
+    expected_endpoint: "local_pipe_or_socket_1"
+  - name: "Trust-Shell"
+    role: "User Interface & Voice Routing"
+    expected_endpoint: "local_pipe_or_socket_2"
+  - name: "AudioVideoEngine-CPP"
+    role: "Hardware Audio/Video Processing"
+    expected_endpoint: "local_pipe_or_socket_3"
+  - name: "AnnonOS"
+    role: "System-level Mobile Environment"
+    expected_endpoint: "local_pipe_or_socket_4"

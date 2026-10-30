@@ -1,0 +1,79 @@
+# =========================================
+# OPERATING SYSTEM & IDE ARTIFACTS
+# =========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux / General
+*~
+*.swp
+*.swo
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# =========================================
+# LOGS & RAW DIAGNOSTIC DATA
+# =========================================
+# Avoid committing raw or local execution logs
+*.log
+logs/
+*.out
+*.err
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================================
+# DUMPS, TRACES & CRASH ARTIFACTS
+# =========================================
+# Core dumps, memory snapshots, and stack traces
+core.*
+*.dmp
+*.core
+*.stackdump
+trace/
+*.etl
+*.pcap
+*.cap
+
+# =========================================
+# COMPRESSED & ARCHIVED OUTPUTS
+# =========================================
+# Diagnostic bundles are often zipped up (e.g., tar.gz, zip)
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# =========================================
+# ENVIRONMENT & SENSITIVE SECRETS
+# =========================================
+# Never commit environment variables, keys, or credentials
+.env
+.env.local
+*.pem
+*.key
+secrets/
+credentials.json
+
+# =========================================
+# TEMPORARY & CACHE DIRECTORIES
+# =========================================
+tmp/
+temp/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/

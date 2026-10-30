@@ -15,3 +15,12 @@
     "temperature": 0.0
   }
 }
+
+{
+  "voice_command_map": {
+    "start stream": ["--start-stream", "--device=default"],
+    "stop stream": ["--stop-stream"],
+    "run diagnostics": ["--diagnose", "--verbose"],
+    "check hardware": ["--hw-check"]
+  }
+}

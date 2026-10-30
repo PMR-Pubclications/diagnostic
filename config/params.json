@@ -1,0 +1,17 @@
+{
+  "preprocessing": {
+    "max_sequence_length": 512,
+    "chunk_overlap": 64,
+    "normalize_timestamps": true
+  },
+  "model_parameters": {
+    "embedding_dimension": 384,
+    "anomaly_threshold": 0.85,
+    "top_k_results": 5
+  },
+  "voice_parameters": {
+    "beam_size": 5,
+    "language": "en",
+    "temperature": 0.0
+  }
+}

@@ -15,3 +15,12 @@ Include as a header-only interface library in your CMake project:
 ```cmake
 add_subdirectory(diagnostic-core)
 target_link_libraries(your_target PRIVATE DiagnosticCore)
+
+
+## Consumption in Other Projects
+To include `diagnostic-core` in your project's CMake build:
+
+1. Add it as a submodule or subdirectory:
+   ```cmake
+   add_subdirectory(path/to/diagnostic-core)
+

@@ -1,0 +1,27 @@
+
+---
+
+### 4. CI/CD Workflow (`.github/workflows/ci.yml`)
+```yaml
+name: Diagnostic Core CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure CMake
+      run: cmake -B build -S .
+      
+    - name: Build Diagnostic Runner
+      run: cmake --build build
+      
+    - name: Run Audit Suite
+      run: ./build/diagnostic_runner
